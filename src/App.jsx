@@ -14,7 +14,7 @@ import { useAIAssistant } from "./hooks/useAIassistant";
 import ProjectSystem from "./components/ProjectSystem";
 import BuildProcess from "./components/BuildProcess";
 import FinalCTA from "./components/FinalCTA";
-import StartProject from "./components/StartProject";
+import StartProject from "./components/Startproject";
 import Contact from "./components/Contact"; 
 
 const Home = ({
