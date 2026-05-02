@@ -10,7 +10,7 @@ import Footer from "./components/Footer";
 import { AIAssistant } from "./components/AIPannel";
 import { AIAssistantButton } from "./components/AIAssistantButton";
 import LiveBuild from "./components/LiveBuild";
-import { useAIAssistant } from "./hooks/useAIAssistant";
+import { useAIassistant } from "./hooks/useAIAssistant";
 import ProjectSystem from "./components/ProjectSystem";
 import BuildProcess from "./components/BuildProcess";
 import FinalCTA from "./components/FinalCTA";
