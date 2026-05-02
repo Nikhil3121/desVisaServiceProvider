@@ -1,0 +1,117 @@
+@import './styles/animations.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: #050505;
+  color: #ffffff;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  overflow-x: hidden;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+@layer components {
+  .neon-text {
+    @apply bg-gradient-to-r from-cyan-400 to-red-500 bg-clip-text text-transparent;
+  }
+
+  .glass-panel {
+    @apply relative overflow-hidden bg-glass-light backdrop-blur-md border border-neon-cyan/20 rounded-2xl p-6 transition-all duration-300 cursor-pointer;
+  }
+
+  .glass-panel::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(90deg, transparent, rgba(0, 229, 255, 0.1), transparent);
+    opacity: 0;
+  }
+
+  .glass-panel:hover {
+    @apply bg-glass-lighter border-neon-cyan/60 shadow-glow-cyan -translate-y-2;
+  }
+
+  .hud-ring {
+    @apply relative w-72 h-72 rounded-full border-2 border-neon-cyan/30 bg-gradient-to-b from-neon-cyan/5 to-transparent shadow-glow-cyan;
+  }
+
+  .vision-ring {
+    @apply w-52 h-52 border-[3px] border-neon-cyan rounded-full;
+  }
+
+  .hologram {
+    @apply relative bg-gradient-to-r from-neon-cyan/10 to-neon-red/10 p-16 rounded-3xl overflow-hidden;
+    border: 2px solid;
+    border-image: linear-gradient(135deg, #00E5FF, #FF3B3B) 1;
+  }
+
+  .hologram::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(90deg, transparent, rgba(0, 229, 255, 0.2), transparent);
+  }
+
+  .grid-bg {
+    @apply absolute w-full h-full pointer-events-none;
+    background-image:
+      linear-gradient(0deg, transparent 24%, rgba(0, 229, 255, 0.05) 25%, rgba(0, 229, 255, 0.05) 26%, transparent 27%, transparent 74%, rgba(0, 229, 255, 0.05) 75%, rgba(0, 229, 255, 0.05) 76%, transparent 77%, transparent),
+      linear-gradient(90deg, transparent 24%, rgba(0, 229, 255, 0.05) 25%, rgba(0, 229, 255, 0.05) 26%, transparent 27%, transparent 74%, rgba(0, 229, 255, 0.05) 75%, rgba(0, 229, 255, 0.05) 76%, transparent 77%, transparent);
+    background-size: 60px 60px;
+  }
+
+  .particle {
+    @apply fixed pointer-events-none w-[2px] h-[2px] bg-neon-cyan rounded-full;
+    box-shadow: 0 0 5px rgba(0, 229, 255, 0.8);
+  }
+
+  .glow-text {
+    @apply relative z-10;
+    text-shadow: 0 0 20px rgba(0, 229, 255, 0.8);
+  }
+}
+
+@media (max-width: 768px) {
+  .hud-ring {
+    @apply w-48 h-48;
+  }
+
+  .vision-ring {
+    @apply w-40 h-40;
+  }
+
+  .glass-panel {
+    @apply p-4;
+  }
+
+  .hologram {
+    @apply p-8;
+  }
+}
+
+@media (max-width: 640px) {
+  .hud-ring {
+    @apply w-40 h-40;
+  }
+
+  .glass-panel:hover {
+    @apply -translate-y-1;
+  }
+}
