@@ -75,7 +75,7 @@ const FinalCTA = () => {
         .cta-primary-btn {
           position: relative;
           background: linear-gradient(135deg, rgba(0, 229, 255, 0.1) 0%, rgba(34, 211, 238, 0.05) 100%);
-          border: 2px solid rgba(0, 229, 255, 0.5);
+          border: 1px solid rgba(0, 229, 255, 0.5);
           transition: all 0.3s ease;
         }
 
@@ -89,7 +89,7 @@ const FinalCTA = () => {
         .cta-secondary-btn {
           position: relative;
           background: rgba(255, 255, 255, 0.05);
-          border: 2px solid rgba(255, 255, 255, 0.2);
+          border: 1px solid rgba(255, 255, 255, 0.2);
           transition: all 0.3s ease;
         }
 

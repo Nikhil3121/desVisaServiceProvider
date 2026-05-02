@@ -86,7 +86,7 @@ const Navbar = () => {
         {/* Start Project Button */}
         <button
           onClick={() => navigate("/start-project")}
-          className="hidden md:block px-6 py-3 rounded-lg bg-gradient-to-br from-cyan-500/10 to-blue-500/5 border-2 border-cyan-500/50 text-cyan-300 text-sm font-semibold uppercase tracking-widest backdrop-blur-md hover:scale-105 hover:border-cyan-400/80 hover:shadow-[0_0_30px_rgba(0,229,255,0.4)] transition-all duration-300"
+          className="hidden md:block px-6 py-3 rounded-lg bg-gradient-to-br from-cyan-500/10 to-blue-500/5 border border-cyan-500/50 text-cyan-300 text-sm font-semibold uppercase tracking-widest backdrop-blur-md hover:scale-105 hover:border-cyan-400/80 hover:shadow-[0_0_30px_rgba(0,229,255,0.4)] transition-all duration-300"
           aria-label="Start Project"
         >
           🚀 Start Project

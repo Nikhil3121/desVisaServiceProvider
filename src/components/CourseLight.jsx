@@ -16,7 +16,7 @@ const CursorLight = () => {
     width: "300px",
     height: "300px",
     borderRadius: "50%",
-    background: "radial-gradient(circle, rgba(0,229,255,0.15) 0%, rgba(0,229,255,0.05) 40%, transparent 70%)",
+    background: "radial-gradient(circle, rgba(0, 229, 255, 0.27) 0%, rgba(0,229,255,0.05) 40%, transparent 70%)",
     filter: "blur(40px)",
     transform: "translate(-50%, -50%)",
   };
