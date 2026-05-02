@@ -34,21 +34,40 @@ export const AIAssistant = ({ isOpen, isMinimized, onMinimize, onClose }) => {
   });
   const [followUpExpanded, setFollowUpExpanded] = useState(null);
   const [expandedMessageId, setExpandedMessageId] = useState(null);
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
+  const [isPortrait, setIsPortrait] = useState(
+    () => window.innerHeight > window.innerWidth
+  );
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
 
   const scrollRef = useRef(null);
   const messagesEndRef = useRef(null);
   const panelRef = useRef(null);
+  const inputRef = useRef(null);
   const mousePosition = useMousePosition();
 
-  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 640);
-
+  // Handle resize and orientation
   useEffect(() => {
     const handleResize = () => {
-      setIsMobile(window.innerWidth < 640);
+      setIsMobile(window.innerWidth < 768);
+      setIsPortrait(window.innerHeight > window.innerWidth);
     };
 
+    const handleFocus = () => setKeyboardVisible(true);
+    const handleBlur = () => setKeyboardVisible(false);
+
     window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
+    window.addEventListener("orientationchange", handleResize);
+
+    inputRef.current?.addEventListener("focus", handleFocus);
+    inputRef.current?.addEventListener("blur", handleBlur);
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      window.removeEventListener("orientationchange", handleResize);
+      inputRef.current?.removeEventListener("focus", handleFocus);
+      inputRef.current?.removeEventListener("blur", handleBlur);
+    };
   }, []);
 
   const suggestions = [
@@ -444,18 +463,29 @@ export const AIAssistant = ({ isOpen, isMinimized, onMinimize, onClose }) => {
     return (
       <div
         onClick={() => onMinimize(false)}
-        className="fixed bottom-20 right-6 sm:right-8 z-[9999] w-[90%] sm:w-[400px] h-[70vh]"
+        className="fixed bottom-16 right-4 sm:right-8 z-[9999] w-14 h-14 flex items-center justify-center"
       >
-        <span className="animate-pulse">🤖</span>
+        <span className="text-2xl animate-pulse">🤖</span>
         <div className="absolute inset-0 rounded-full bg-cyan-500/20 animate-ping opacity-75" />
       </div>
     );
   }
 
-  const parallaxOffset = {
-    x: mousePosition.x * 5,
-    y: mousePosition.y * 5,
-  };
+  const parallaxOffset = isMobile
+    ? { x: 0, y: 0 }
+    : {
+        x: mousePosition.x * 5,
+        y: mousePosition.y * 5,
+      };
+
+  const panelWidth = isMobile ? "100%" : isPortrait ? "95%" : "450px";
+  const panelHeight = isMobile
+    ? keyboardVisible
+      ? "50vh"
+      : "100vh"
+    : isPortrait
+      ? "80vh"
+      : "85vh";
 
   return createPortal(
     <>
@@ -468,10 +498,11 @@ export const AIAssistant = ({ isOpen, isMinimized, onMinimize, onClose }) => {
         ref={panelRef}
         style={{
           position: "fixed",
-          right: "24px",
-          bottom: "100px",
-          width: window.innerWidth < 640 ? "100%" : "420px",
-          height: window.innerWidth < 640 ? "100%" : "75vh",
+          right: isMobile ? "8px" : "24px",
+          bottom: isMobile ? "8px" : "100px",
+          width: panelWidth,
+          height: panelHeight,
+          maxHeight: "100vh",
           zIndex: 999999,
           transform: isOpen
             ? "translateY(0) scale(1)"
@@ -489,12 +520,14 @@ export const AIAssistant = ({ isOpen, isMinimized, onMinimize, onClose }) => {
           }}
         />
 
-        <div
-          className="absolute -top-32 -right-32 w-64 h-64 bg-gradient-radial from-cyan-500/30 to-transparent rounded-full blur-3xl opacity-40 pointer-events-none animate-light-drift"
-          style={{
-            transform: `translate3d(${parallaxOffset.x * 0.5}px, ${parallaxOffset.y * 0.5}px, 0)`,
-          }}
-        />
+        {!isMobile && (
+          <div
+            className="absolute -top-32 -right-32 w-64 h-64 bg-gradient-radial from-cyan-500/30 to-transparent rounded-full blur-3xl opacity-40 pointer-events-none animate-light-drift"
+            style={{
+              transform: `translate3d(${parallaxOffset.x * 0.5}px, ${parallaxOffset.y * 0.5}px, 0)`,
+            }}
+          />
+        )}
 
         <div
           className="relative h-full rounded-3xl sm:rounded-2xl border border-cyan-500/30 shadow-2xl shadow-cyan-500/25 overflow-hidden bg-black/80 backdrop-blur-xl flex flex-col hover:shadow-cyan-500/40 hover:border-cyan-500/50 transition-all duration-300"
@@ -504,28 +537,29 @@ export const AIAssistant = ({ isOpen, isMinimized, onMinimize, onClose }) => {
         >
           <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 via-transparent to-blue-500/5 pointer-events-none rounded-3xl sm:rounded-2xl" />
 
-          <div className="flex-shrink-0 border-b border-cyan-500/10 bg-black/50 backdrop-blur-sm relative z-10">
-            <div className="px-5 py-4 flex items-center justify-between">
-              <div className="flex items-center gap-3 flex-1">
-                <div className="relative">
+          {/* Header */}
+          <div className="flex-shrink-0 border-b border-cyan-500/10 bg-black/50 backdrop-blur-sm relative z-10 px-3 sm:px-5 py-3 sm:py-4">
+            <div className="flex items-center justify-between gap-2 sm:gap-3">
+              <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
+                <div className="relative flex-shrink-0">
                   <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-500 flex items-center justify-center text-white font-bold text-lg shadow-lg shadow-cyan-500/30">
                     ⚡
                   </div>
                   <div className="absolute -top-1 -right-1 w-3 h-3 bg-emerald-400 rounded-full border border-emerald-300 animate-pulse" />
                 </div>
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1">
                   <h1 className="text-white font-semibold tracking-tight text-sm truncate">
                     Deshvisa CTO
                   </h1>
-                  <p className="text-xs text-cyan-400/70">
+                  <p className="text-xs text-cyan-400/70 truncate">
                     Advanced Project Analysis
                   </p>
                 </div>
               </div>
-              <div className="flex gap-1">
+              <div className="flex gap-1 flex-shrink-0">
                 <button
                   onClick={handleClear}
-                  className="p-2 hover:bg-white/10 rounded-lg transition-all duration-200 text-gray-400 hover:text-white active:scale-95 hidden sm:block"
+                  className="p-2 hover:bg-white/10 rounded-lg transition-all duration-200 text-gray-400 hover:text-white active:scale-95 hidden sm:block touch-none"
                   aria-label="Clear chat"
                   title="Clear chat"
                 >
@@ -533,14 +567,14 @@ export const AIAssistant = ({ isOpen, isMinimized, onMinimize, onClose }) => {
                 </button>
                 <button
                   onClick={() => onMinimize(true)}
-                  className="p-2 hover:bg-white/10 rounded-lg transition-all duration-200 text-gray-400 hover:text-white active:scale-95"
+                  className="p-2 hover:bg-white/10 rounded-lg transition-all duration-200 text-gray-400 hover:text-white active:scale-95 touch-none"
                   aria-label="Minimize"
                 >
                   −
                 </button>
                 <button
                   onClick={onClose}
-                  className="p-2 hover:bg-white/10 rounded-lg transition-all duration-200 text-gray-400 hover:text-white active:scale-95"
+                  className="p-2 hover:bg-white/10 rounded-lg transition-all duration-200 text-gray-400 hover:text-white active:scale-95 touch-none"
                   aria-label="Close"
                 >
                   ✕
@@ -548,28 +582,31 @@ export const AIAssistant = ({ isOpen, isMinimized, onMinimize, onClose }) => {
               </div>
             </div>
 
-            <div className="px-5 py-2 bg-black/30 border-t border-cyan-500/5 flex items-center gap-2 text-xs text-cyan-400/60 font-medium">
-              <span className="inline-block w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" />
-              System Ready • AI Analysis Mode Active
+            <div className="px-0 sm:px-0 py-2 bg-black/30 border-t border-cyan-500/5 flex items-center gap-2 text-xs text-cyan-400/60 font-medium mt-3">
+              <span className="inline-block w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse flex-shrink-0" />
+              <span className="truncate">
+                System Ready • AI Analysis Mode Active
+              </span>
             </div>
           </div>
 
+          {/* Messages Area */}
           <div
             ref={scrollRef}
-            className="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar bg-black/40 px-5 py-4 relative z-10"
+            className="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar bg-black/40 px-4 sm:px-5 py-4 relative z-10 scroll-smooth"
           >
             {messages.length === 0 && !loading && !typingMessage && (
-              <div className="flex flex-col items-center justify-center min-h-[300px] text-center gap-4 py-8">
-                <div className="text-6xl">🚀</div>
-                <h2 className="text-lg font-light text-gray-200 tracking-wide">
+              <div className="flex flex-col items-center justify-center min-h-[250px] sm:min-h-[300px] text-center gap-3 sm:gap-4 py-8">
+                <div className="text-5xl sm:text-6xl">🚀</div>
+                <h2 className="text-base sm:text-lg font-light text-gray-200 tracking-wide px-2">
                   Ready to analyze your project
                 </h2>
-                <p className="text-xs text-gray-400 max-w-xs leading-relaxed">
+                <p className="text-xs sm:text-sm text-gray-400 max-w-xs leading-relaxed px-2">
                   Describe your idea and get comprehensive analysis including
                   timeline, risks, and team
                 </p>
 
-                <div className="pt-4 w-full">
+                <div className="pt-4 w-full px-2">
                   <p className="text-xs text-gray-400 mb-3 uppercase tracking-widest font-medium">
                     Try these:
                   </p>
@@ -578,7 +615,7 @@ export const AIAssistant = ({ isOpen, isMinimized, onMinimize, onClose }) => {
                       <button
                         key={idx}
                         onClick={() => handleSuggestionClick(suggestion)}
-                        className="px-3 py-1.5 rounded-lg bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 text-xs font-medium hover:bg-cyan-500/20 hover:border-cyan-500/50 transition-all duration-300 active:scale-95"
+                        className="px-3 py-2 sm:py-1.5 rounded-lg bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 text-xs font-medium hover:bg-cyan-500/20 hover:border-cyan-500/50 transition-all duration-300 active:scale-95 touch-none"
                       >
                         {suggestion}
                       </button>
@@ -588,23 +625,23 @@ export const AIAssistant = ({ isOpen, isMinimized, onMinimize, onClose }) => {
               </div>
             )}
 
-            <div className="space-y-4 py-2">
+            <div className="space-y-3 sm:space-y-4 py-2">
               {messages.map((msg, idx) => (
                 <div key={idx}>
                   <div
                     className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
                   >
                     <div
-                      className={`max-w-xs px-4 py-3 rounded-2xl transition-all duration-300 ${
+                      className={`max-w-xs sm:max-w-md px-3 sm:px-4 py-2 sm:py-3 rounded-2xl transition-all duration-300 text-sm ${
                         msg.role === "user"
                           ? "bg-gradient-to-r from-cyan-500 to-blue-500 text-white rounded-br-none"
                           : "bg-white/5 border border-cyan-500/20 text-gray-200 rounded-bl-none"
                       }`}
                     >
                       {msg.role === "user" ? (
-                        <p className="text-sm leading-relaxed">{msg.text}</p>
+                        <p className="leading-relaxed">{msg.text}</p>
                       ) : (
-                        <div className="space-y-3">
+                        <div className="space-y-2 sm:space-y-3">
                           {msg?.analysis && (
                             <>
                               <div>
@@ -630,11 +667,11 @@ export const AIAssistant = ({ isOpen, isMinimized, onMinimize, onClose }) => {
                                               (tech, i) => (
                                                 <span
                                                   key={i}
-                                                  className="px-2 py-0.5 rounded text-xs bg-cyan-500/20 border border-cyan-500/30 text-cyan-300"
+                                                  className="px-2 py-0.5 rounded text-xs bg-cyan-500/20 border border-cyan-500/30 text-cyan-300 whitespace-nowrap"
                                                 >
                                                   {tech}
                                                 </span>
-                                              ),
+                                              )
                                             )}
                                           </div>
                                         </div>
@@ -665,7 +702,7 @@ export const AIAssistant = ({ isOpen, isMinimized, onMinimize, onClose }) => {
 
                                     <button
                                       onClick={() => setShowForm(true)}
-                                      className="w-full px-3 py-2 mt-2 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white font-bold text-xs transition-all duration-300 active:scale-95"
+                                      className="w-full px-3 py-2.5 sm:py-2 mt-2 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white font-bold text-xs sm:text-sm transition-all duration-300 active:scale-95 touch-none"
                                     >
                                       🚀 Start This Project
                                     </button>
@@ -676,12 +713,12 @@ export const AIAssistant = ({ isOpen, isMinimized, onMinimize, onClose }) => {
                                 Array.isArray(
                                   msg.analysis?.timeline?.phases,
                                 ) && (
-                                  <div className="mt-3">
+                                  <div className="mt-2 sm:mt-3">
                                     <p className="text-xs uppercase tracking-widest text-cyan-400 font-semibold mb-2">
                                       ⏱️ Timeline Breakdown
                                     </p>
 
-                                    <ul className="space-y-1 text-sm text-gray-300">
+                                    <ul className="space-y-1 text-xs sm:text-sm text-gray-300">
                                       {msg.analysis.timeline.phases.map(
                                         (p, i) => (
                                           <li key={i}>
@@ -690,7 +727,7 @@ export const AIAssistant = ({ isOpen, isMinimized, onMinimize, onClose }) => {
                                             </strong>{" "}
                                             {p.duration}
                                           </li>
-                                        ),
+                                        )
                                       )}
                                     </ul>
                                   </div>
@@ -703,9 +740,9 @@ export const AIAssistant = ({ isOpen, isMinimized, onMinimize, onClose }) => {
                   </div>
 
                   {shouldShowFollowUp && msg.id === lastMessage?.id && (
-                    <div className="mt-4 animate-follow-up-fade">
+                    <div className="mt-3 sm:mt-4 animate-follow-up-fade">
                       <div className="flex justify-start mb-3">
-                        <div className="max-w-xs px-4 py-3 rounded-2xl rounded-bl-none bg-gradient-to-r from-purple-500/20 to-blue-500/10 border border-purple-500/30 text-gray-300 text-sm">
+                        <div className="max-w-xs sm:max-w-md px-3 sm:px-4 py-2 sm:py-3 rounded-2xl rounded-bl-none bg-gradient-to-r from-purple-500/20 to-blue-500/10 border border-purple-500/30 text-gray-300 text-xs sm:text-sm">
                           <p className="text-xs uppercase tracking-widest text-purple-300 font-semibold mb-1">
                             💡 Next Steps
                           </p>
@@ -718,21 +755,21 @@ export const AIAssistant = ({ isOpen, isMinimized, onMinimize, onClose }) => {
                       <div className="flex flex-wrap gap-2 justify-start">
                         <button
                           onClick={() => handleGetFullPlan(msg.id)}
-                          className="px-3 py-1.5 rounded-full text-xs font-semibold bg-gradient-to-r from-cyan-500/30 to-cyan-500/10 border border-cyan-500/50 text-cyan-300 hover:from-cyan-500/50 hover:to-cyan-500/30 hover:border-cyan-400/80 hover:shadow-lg hover:shadow-cyan-500/30 transition-all duration-300 active:scale-95 animate-button-stagger-1"
+                          className="px-3 py-2 rounded-full text-xs font-semibold bg-gradient-to-r from-cyan-500/30 to-cyan-500/10 border border-cyan-500/50 text-cyan-300 hover:from-cyan-500/50 hover:to-cyan-500/30 hover:border-cyan-400/80 hover:shadow-lg hover:shadow-cyan-500/30 transition-all duration-300 active:scale-95 touch-none animate-button-stagger-1"
                         >
                           ✨ Get Full Plan
                         </button>
 
                         <button
                           onClick={() => handleEstimateCost(msg.id)}
-                          className="px-3 py-1.5 rounded-full text-xs font-semibold bg-gradient-to-r from-emerald-500/30 to-emerald-500/10 border border-emerald-500/50 text-emerald-300 hover:from-emerald-500/50 hover:to-emerald-500/30 hover:border-emerald-400/80 hover:shadow-lg hover:shadow-emerald-500/30 transition-all duration-300 active:scale-95 animate-button-stagger-2"
+                          className="px-3 py-2 rounded-full text-xs font-semibold bg-gradient-to-r from-emerald-500/30 to-emerald-500/10 border border-emerald-500/50 text-emerald-300 hover:from-emerald-500/50 hover:to-emerald-500/30 hover:border-emerald-400/80 hover:shadow-lg hover:shadow-emerald-500/30 transition-all duration-300 active:scale-95 touch-none animate-button-stagger-2"
                         >
                           💰 Estimate Cost
                         </button>
 
                         <button
                           onClick={() => handleTalkToExpert()}
-                          className="px-3 py-1.5 rounded-full text-xs font-semibold bg-gradient-to-r from-blue-500/30 to-blue-500/10 border border-blue-500/50 text-blue-300 hover:from-blue-500/50 hover:to-blue-500/30 hover:border-blue-400/80 hover:shadow-lg hover:shadow-blue-500/30 transition-all duration-300 active:scale-95 animate-button-stagger-3"
+                          className="px-3 py-2 rounded-full text-xs font-semibold bg-gradient-to-r from-blue-500/30 to-blue-500/10 border border-blue-500/50 text-blue-300 hover:from-blue-500/50 hover:to-blue-500/30 hover:border-blue-400/80 hover:shadow-lg hover:shadow-blue-500/30 transition-all duration-300 active:scale-95 touch-none animate-button-stagger-3"
                         >
                           👤 Talk to Expert
                         </button>
@@ -740,7 +777,7 @@ export const AIAssistant = ({ isOpen, isMinimized, onMinimize, onClose }) => {
 
                       {followUpExpanded === "fullPlan" &&
                         expandedMessageId === msg.id && (
-                          <div className="mt-4 p-4 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 animate-expand-content space-y-3">
+                          <div className="mt-3 sm:mt-4 p-3 sm:p-4 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 animate-expand-content space-y-2 sm:space-y-3">
                             {msg.analysis?.full && (
                               <>
                                 <div>
@@ -754,12 +791,12 @@ export const AIAssistant = ({ isOpen, isMinimized, onMinimize, onClose }) => {
                                       msg.analysis.full.features.map(
                                         (feature, i) => (
                                           <li key={i} className="flex gap-2">
-                                            <span className="text-cyan-400">
+                                            <span className="text-cyan-400 flex-shrink-0">
                                               →
                                             </span>
                                             <span>{feature}</span>
                                           </li>
-                                        ),
+                                        )
                                       )}
                                   </ul>
                                 </div>
@@ -784,7 +821,7 @@ export const AIAssistant = ({ isOpen, isMinimized, onMinimize, onClose }) => {
                                           .slice(0, 4)
                                           .map((risk, i) => (
                                             <li key={i} className="flex gap-2">
-                                              <span className="text-orange-400">
+                                              <span className="text-orange-400 flex-shrink-0">
                                                 ⚡
                                               </span>
                                               <span>{risk}</span>
@@ -805,12 +842,12 @@ export const AIAssistant = ({ isOpen, isMinimized, onMinimize, onClose }) => {
                                         msg.analysis.full.team.map(
                                           (member, i) => (
                                             <li key={i} className="flex gap-2">
-                                              <span className="text-purple-400">
+                                              <span className="text-purple-400 flex-shrink-0">
                                                 👤
                                               </span>
                                               <span>{member}</span>
                                             </li>
-                                          ),
+                                          )
                                         )}
                                     </ul>
                                   </div>
@@ -822,7 +859,7 @@ export const AIAssistant = ({ isOpen, isMinimized, onMinimize, onClose }) => {
 
                       {followUpExpanded === "cost" &&
                         expandedMessageId === msg.id && (
-                          <div className="mt-4 p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 animate-expand-content space-y-3">
+                          <div className="mt-3 sm:mt-4 p-3 sm:p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 animate-expand-content space-y-2 sm:space-y-3">
                             <div>
                               <p className="text-xs uppercase tracking-widest text-emerald-400 font-semibold mb-3">
                                 💰 Cost Breakdown
@@ -835,7 +872,7 @@ export const AIAssistant = ({ isOpen, isMinimized, onMinimize, onClose }) => {
                                   </span>
                                 </div>
                                 <div className="flex justify-between pb-2 border-b border-emerald-500/20">
-                                  <span>Infrastructure & DevOps (20%)</span>
+                                  <span>Infrastructure (20%)</span>
                                   <span className="text-emerald-300 font-semibold">
                                     TBD
                                   </span>
@@ -877,8 +914,8 @@ export const AIAssistant = ({ isOpen, isMinimized, onMinimize, onClose }) => {
 
               {typingMessage && (
                 <div className="flex justify-start">
-                  <div className="max-w-xs px-4 py-3 rounded-2xl rounded-bl-none bg-white/5 border border-cyan-500/20 text-gray-200">
-                    <p className="text-sm leading-relaxed">
+                  <div className="max-w-xs sm:max-w-md px-3 sm:px-4 py-2 sm:py-3 rounded-2xl rounded-bl-none bg-white/5 border border-cyan-500/20 text-gray-200 text-sm">
+                    <p className="leading-relaxed">
                       {typingMessage}
                       <span className="animate-pulse text-cyan-400">▌</span>
                     </p>
@@ -888,7 +925,7 @@ export const AIAssistant = ({ isOpen, isMinimized, onMinimize, onClose }) => {
 
               {loading && !typingMessage && (
                 <div className="flex justify-start">
-                  <div className="px-4 py-3 rounded-2xl rounded-bl-none bg-white/5 border border-cyan-500/20">
+                  <div className="px-3 sm:px-4 py-2 sm:py-3 rounded-2xl rounded-bl-none bg-white/5 border border-cyan-500/20">
                     <div className="flex gap-1.5 h-6 items-center">
                       <div
                         className="w-1 h-4 bg-cyan-400 rounded-full animate-pulse"
@@ -911,7 +948,7 @@ export const AIAssistant = ({ isOpen, isMinimized, onMinimize, onClose }) => {
                 <div className="flex justify-start">
                   <form
                     onSubmit={handleLeadFormSubmit}
-                    className="w-full max-w-xs space-y-2 p-4 rounded-2xl rounded-bl-none bg-purple-500/10 border border-purple-500/20"
+                    className="w-full max-w-xs sm:max-w-md space-y-2 sm:space-y-3 p-3 sm:p-4 rounded-2xl rounded-bl-none bg-purple-500/10 border border-purple-500/20"
                   >
                     <h3 className="text-xs font-semibold text-cyan-300 uppercase tracking-widest">
                       Get Your Roadmap
@@ -924,7 +961,8 @@ export const AIAssistant = ({ isOpen, isMinimized, onMinimize, onClose }) => {
                         value={formData.name}
                         onChange={handleFormChange}
                         placeholder="Your Name"
-                        className="w-full px-2.5 py-2 rounded-lg bg-white/5 border border-cyan-500/20 focus:border-cyan-500/50 outline-none text-white placeholder-gray-500 transition-all text-xs"
+                        className="w-full px-3 sm:px-3 py-3 rounded-lg bg-white/5 border border-cyan-500/20 focus:border-cyan-500/50 outline-none text-white placeholder-gray-500 transition-all text-sm touch-none"
+                        autoComplete="name"
                       />
                     </div>
 
@@ -935,7 +973,8 @@ export const AIAssistant = ({ isOpen, isMinimized, onMinimize, onClose }) => {
                         value={formData.email}
                         onChange={handleFormChange}
                         placeholder="Your Email"
-                        className="w-full px-2.5 py-2 rounded-lg bg-white/5 border border-cyan-500/20 focus:border-cyan-500/50 outline-none text-white placeholder-gray-500 transition-all text-xs"
+                        className="w-full px-3 sm:px-3 py-3 rounded-lg bg-white/5 border border-cyan-500/20 focus:border-cyan-500/50 outline-none text-white placeholder-gray-500 transition-all text-sm touch-none"
+                        autoComplete="email"
                       />
                     </div>
 
@@ -944,7 +983,7 @@ export const AIAssistant = ({ isOpen, isMinimized, onMinimize, onClose }) => {
                         name="budget"
                         value={formData.budget}
                         onChange={handleFormChange}
-                        className="w-full px-2.5 py-2 rounded-lg bg-white/5 border border-cyan-500/20 focus:border-cyan-500/50 outline-none text-white text-xs appearance-none cursor-pointer"
+                        className="w-full px-3 sm:px-3 py-3 rounded-lg bg-white/5 border border-cyan-500/20 focus:border-cyan-500/50 outline-none text-white text-sm appearance-none cursor-pointer touch-none"
                       >
                         <option value="">Select budget...</option>
                         <option value="under-1k">Under $1,000</option>
@@ -955,20 +994,20 @@ export const AIAssistant = ({ isOpen, isMinimized, onMinimize, onClose }) => {
                       </select>
                     </div>
 
-                    <div className="flex gap-2 pt-1">
+                    <div className="flex gap-2 pt-2">
                       <button
                         type="submit"
                         disabled={
                           !formData.name || !formData.email || !formData.budget
                         }
-                        className="flex-1 px-2 py-1.5 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 disabled:opacity-40 text-white font-semibold text-xs transition-all"
+                        className="flex-1 px-3 py-3 sm:py-2 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 disabled:opacity-40 text-white font-semibold text-xs sm:text-sm transition-all touch-none"
                       >
                         Send
                       </button>
                       <button
                         type="button"
                         onClick={() => setShowForm(false)}
-                        className="px-2 py-1.5 rounded-lg bg-white/5 border border-cyan-500/20 text-gray-300 text-xs transition-all"
+                        className="px-3 py-3 sm:py-2 rounded-lg bg-white/5 border border-cyan-500/20 text-gray-300 text-xs sm:text-sm transition-all touch-none"
                       >
                         Cancel
                       </button>
@@ -979,8 +1018,8 @@ export const AIAssistant = ({ isOpen, isMinimized, onMinimize, onClose }) => {
 
               {successMessage && (
                 <div className="flex justify-start">
-                  <div className="px-4 py-2 rounded-2xl rounded-bl-none bg-emerald-500/20 border border-emerald-500/40">
-                    <p className="text-xs font-semibold text-emerald-300">
+                  <div className="px-3 sm:px-4 py-2 sm:py-3 rounded-2xl rounded-bl-none bg-emerald-500/20 border border-emerald-500/40">
+                    <p className="text-xs sm:text-sm font-semibold text-emerald-300">
                       ✅ Request received. We'll contact you soon.
                     </p>
                   </div>
@@ -991,36 +1030,37 @@ export const AIAssistant = ({ isOpen, isMinimized, onMinimize, onClose }) => {
             </div>
           </div>
 
-          <div className="flex-shrink-0 border-t border-cyan-500/10 bg-black/50 backdrop-blur-sm relative z-10">
-            <div className="px-5 py-3 space-y-2">
-              <div className="relative group">
-                <input
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={(e) =>
-                    e.key === "Enter" && !e.shiftKey && handleChatSubmit()
-                  }
-                  placeholder="Describe your project idea..."
-                  className="w-full px-3.5 py-2.5 pr-10 rounded-xl bg-white/5 backdrop-blur-md border border-cyan-500/20 group-hover:border-cyan-500/40 focus:border-cyan-500/60 focus:shadow-lg focus:shadow-cyan-500/20 outline-none text-white placeholder-gray-500 transition-all duration-300 text-sm"
-                />
-                <button
-                  onClick={handleChatSubmit}
-                  disabled={loading || !input.trim()}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-cyan-400 hover:text-cyan-300 disabled:opacity-30 transition-all duration-300 text-lg"
-                  aria-label="Send"
-                >
-                  →
-                </button>
-              </div>
-
+          {/* Input Area */}
+          <div className="flex-shrink-0 border-t border-cyan-500/10 bg-black/50 backdrop-blur-sm relative z-10 px-4 sm:px-5 py-3 space-y-2 sm:space-y-2">
+            <div className="relative group">
+              <input
+                ref={inputRef}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) =>
+                  e.key === "Enter" && !e.shiftKey && handleChatSubmit()
+                }
+                placeholder="Describe your project idea..."
+                className="w-full px-3 sm:px-3.5 py-3 sm:py-2.5 pr-10 rounded-xl bg-white/5 backdrop-blur-md border border-cyan-500/20 group-hover:border-cyan-500/40 focus:border-cyan-500/60 focus:shadow-lg focus:shadow-cyan-500/20 outline-none text-white placeholder-gray-500 transition-all duration-300 text-sm touch-none"
+                autoComplete="off"
+              />
               <button
                 onClick={handleChatSubmit}
                 disabled={loading || !input.trim()}
-                className="w-full px-3 py-2.5 rounded-xl bg-cyan-500/20 border border-cyan-400/50 text-white font-semibold tracking-wide hover:bg-cyan-500/30 hover:border-cyan-300/80 hover:shadow-lg hover:shadow-cyan-500/20 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-300 text-sm"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-cyan-400 hover:text-cyan-300 disabled:opacity-30 transition-all duration-300 text-lg touch-none active:scale-90"
+                aria-label="Send"
               >
-                {loading ? "Analyzing..." : "Send Message"}
+                →
               </button>
             </div>
+
+            <button
+              onClick={handleChatSubmit}
+              disabled={loading || !input.trim()}
+              className="w-full px-3 py-3 rounded-xl bg-cyan-500/20 border border-cyan-400/50 text-white font-semibold tracking-wide hover:bg-cyan-500/30 hover:border-cyan-300/80 hover:shadow-lg hover:shadow-cyan-500/20 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-300 text-sm touch-none"
+            >
+              {loading ? "Analyzing..." : "Send Message"}
+            </button>
           </div>
         </div>
       </div>
@@ -1133,6 +1173,37 @@ export const AIAssistant = ({ isOpen, isMinimized, onMinimize, onClose }) => {
         @supports (background: radial-gradient(circle, red, blue)) {
           .bg-gradient-radial {
             background: radial-gradient(circle at center, var(--tw-gradient-stops));
+          }
+        }
+
+        /* Mobile optimizations */
+        @media (max-width: 768px) {
+          input, button, select {
+            font-size: 16px !important;
+            min-height: 44px;
+          }
+
+          button {
+            min-height: 44px;
+          }
+        }
+
+        /* Prevent zoom on input focus */
+        input, select, textarea {
+          font-size: 16px;
+        }
+
+        /* Smooth scrolling */
+        * {
+          -webkit-tap-highlight-color: transparent;
+        }
+
+        /* Safe area support */
+        @supports (padding: max(0px)) {
+          @media (orientation: landscape) {
+            .safe-area-bottom {
+              padding-bottom: max(8px, env(safe-area-inset-bottom));
+            }
           }
         }
       `}</style>
