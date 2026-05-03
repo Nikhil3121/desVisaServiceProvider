@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
+const API_URL = import.meta.env.VITE_API_URL || "https://desvisabackend.onrender.com";
 const SERVICES_ENDPOINT = `${API_URL}/api/services/`;
 const CREATE_ORDER_ENDPOINT = `${API_URL}/api/payments/create-order/`;
 const VERIFY_PAYMENT_ENDPOINT = `${API_URL}/api/payments/verify-payment/`;
